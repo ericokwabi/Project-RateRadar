@@ -8,4 +8,4 @@ use App\Http\Controllers\LiteSpeedController;
 //     return $request->user();
 // })->middleware('auth:sanctum');
 
-Route::get('account/ratelimit', [LiteSpeedController::class, 'index']);
+Route::get('account/ratelimit', [LiteSpeedController::class, 'accountRatelimit']);
