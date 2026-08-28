@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('credential_id')->unique();
-            $table->json('credential');
+            $table->text('credential');
             $table->timestamp('last_used_at')->nullable();
             $table->timestamps();
 
