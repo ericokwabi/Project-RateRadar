@@ -13,9 +13,7 @@ use Illuminate\Support\Facades\DB;
  */
 class RateLimitSampler
 {
-    public function __construct(private readonly LiteSpeedService $api)
-    {
-    }
+    public function __construct(private readonly LiteSpeedService $api) {}
 
     /**
      * Meet nu, en schrijf de drie vensters weg onder één tijdstip.
@@ -112,9 +110,24 @@ class RateLimitSampler
             ->orderBy('measured_at')
             ->get();
 
+        // Zelf groeperen in plaats van via groupBy(): de kolom is nullable, en
+        // een rij zonder tijdstip hoort nergens bij.
+        /** @var array<string, list<AccountRatelimit>> $byMoment */
+        $byMoment = [];
+
+        foreach ($rows as $row) {
+            $measuredAt = $row->measured_at;
+
+            if ($measuredAt === null) {
+                continue;
+            }
+
+            $byMoment[$measuredAt->toIso8601String()][] = $row;
+        }
+
         $measurements = [];
 
-        foreach ($rows->groupBy(fn (AccountRatelimit $row) => $row->measured_at->toIso8601String()) as $timestamp => $group) {
+        foreach ($byMoment as $timestamp => $group) {
             $limits = [];
 
             foreach ($group as $row) {

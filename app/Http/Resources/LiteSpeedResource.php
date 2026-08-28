@@ -2,13 +2,14 @@
 
 namespace App\Http\Resources;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
 class LiteSpeedResource extends JsonApiResource
 {
     /**
      * The resource's attributes.
+     *
+     * @var array<int, string>
      */
     public $attributes = [
         // ...
@@ -16,6 +17,8 @@ class LiteSpeedResource extends JsonApiResource
 
     /**
      * The resource's relationships.
+     *
+     * @var array<int, string>
      */
     public $relationships = [
         // ...

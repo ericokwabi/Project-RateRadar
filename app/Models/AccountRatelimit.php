@@ -5,7 +5,24 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * Een gemeten stand van één limietvenster op één moment.
+ *
+ * @property int $id
+ * @property int|null $api_credential_id
+ * @property Carbon|null $measured_at
+ * @property string $limit_type
+ * @property int $limit
+ * @property int $remaining
+ * @property bool $hit_429
+ * @property int $reset
+ * @property Carbon|null $reset_time
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read int $used
+ */
 class AccountRatelimit extends Model
 {
     /**
@@ -41,6 +58,9 @@ class AccountRatelimit extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<ApiCredential, $this>
+     */
     public function credential(): BelongsTo
     {
         return $this->belongsTo(ApiCredential::class, 'api_credential_id');
@@ -52,7 +72,12 @@ class AccountRatelimit extends Model
         return max(0, $this->limit - $this->remaining);
     }
 
-    /** Filtert op één webshop; null betekent de sleutel uit .env. */
+    /**
+     * Filtert op één webshop; null betekent de sleutel uit .env.
+     *
+     * @param  Builder<AccountRatelimit>  $query
+     * @return Builder<AccountRatelimit>
+     */
     public function scopeForCredential(Builder $query, ?int $credentialId): Builder
     {
         return $credentialId === null

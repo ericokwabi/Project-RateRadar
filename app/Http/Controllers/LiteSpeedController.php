@@ -7,6 +7,7 @@ use App\Services\LiteSpeedService;
 use App\Services\RateLimitSampler;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 use RuntimeException;
 
 class LiteSpeedController extends Controller
@@ -20,7 +21,7 @@ class LiteSpeedController extends Controller
     /** Zoveel metingen gaan er maximaal mee terug naar het dashboard. */
     private const DEFAULT_HISTORY = 500;
 
-    public function index(LiteSpeedService $api, RateLimitSampler $sampler)
+    public function index(LiteSpeedService $api, RateLimitSampler $sampler): View
     {
         // Bezoek aan deze pagina legt meteen een meetpunt vast.
         $sampler->sampleIfStale(null, self::MIN_SAMPLE_INTERVAL);

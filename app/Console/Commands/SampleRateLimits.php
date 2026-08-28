@@ -36,7 +36,7 @@ class SampleRateLimits extends Command
         $failures = 0;
 
         foreach ($credentials as $credential) {
-            $label = $credential?->store_id ?? '.env-sleutel';
+            $label = $credential->store_id ?? '.env-sleutel';
 
             try {
                 $sampler->sample($credential);
