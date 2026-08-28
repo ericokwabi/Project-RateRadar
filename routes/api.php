@@ -1,11 +1,12 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ApiCredentialsController;
 use App\Http\Controllers\LiteSpeedController;
+use Illuminate\Support\Facades\Route;
 
-// Route::get('/user', function (Request $request) {
-//     return $request->user();
-// })->middleware('auth:sanctum');
-
+// De reeks metingen voor het dashboard. Optioneel: ?store_id= en ?limit=
 Route::get('account/ratelimit', [LiteSpeedController::class, 'accountRatelimit']);
+
+// CRUD voor de Lightspeed-sleutels per webshop.
+Route::apiResource('credentials', ApiCredentialsController::class)
+    ->parameters(['credentials' => 'credential']);
