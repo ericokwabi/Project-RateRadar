@@ -2,58 +2,74 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\LiteSpeedService;
-use App\Models\AccountRatelimit;
 use App\Models\ApiCredential;
+use App\Services\LiteSpeedService;
+use App\Services\RateLimitSampler;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+use RuntimeException;
 
 class LiteSpeedController extends Controller
 {
-    public function index(LiteSpeedService $api)
+    /**
+     * Hoeveel seconden er minstens tussen twee live-metingen zit. Het dashboard
+     * mag vaker verversen; het krijgt dan de bewaarde reeks terug.
+     */
+    private const MIN_SAMPLE_INTERVAL = 20;
+
+    /** Zoveel metingen gaan er maximaal mee terug naar het dashboard. */
+    private const DEFAULT_HISTORY = 500;
+
+    public function index(LiteSpeedService $api, RateLimitSampler $sampler): View
     {
-        $data = $api->getLiteSpeedEndpoint();
-        foreach ($data['accountRatelimit'] as $category => $item) {
-            AccountRatelimit::create(
-                [
-                    'limit_type' => $category,
-                    'limit' => $item['limit'],
-                    'remaining' => $item['remaining'],
-                    'reset' => $item['reset'],
-                    'reset_time' => now()->addSeconds($item['resetTime']),
-                ]
-            );
-        }
+        // Bezoek aan deze pagina legt meteen een meetpunt vast.
+        $sampler->sampleIfStale(null, self::MIN_SAMPLE_INTERVAL);
 
-
-        return view('items.index', ['items' => $data]);
+        return view('items.index', ['items' => $api->getLiteSpeedEndpoint()]);
     }
 
-    public function accountRatelimit(LiteSpeedService $api)
+    public function accountRatelimit(Request $request, RateLimitSampler $sampler): JsonResponse
     {
-        $data = $api->getLiteSpeedEndpoint();
-        $accountRatelimits = $data['accountRatelimit'];
-        $apiCredentials = ApiCredential::all();
+        $validated = $request->validate([
+            'store_id' => ['nullable', 'string', 'max:255'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:2016'],
+        ]);
 
-        $limits = [];
-        foreach (['limit5Min', 'limitHour', 'limitDay'] as $window) {
-            foreach ($apiCredentials as $credential) {
-                if ($credential->api_key === config('services.litespeed.api_key')) {
-                    $limits[$window]['api_key'] = $credential->api_key;
-                    $limits[$window]['store_id'] = $credential->store_id;
-                    break;
-                }
+        $credential = null;
+
+        if (! empty($validated['store_id'])) {
+            $credential = ApiCredential::where('store_id', $validated['store_id'])->first();
+
+            if ($credential === null) {
+                return response()->json([
+                    'message' => "Onbekende webshop: geen credentials gevonden voor store_id \"{$validated['store_id']}\".",
+                ], 404);
             }
-            $limits[$window] = [
-                'used' => $accountRatelimits[$window]['limit'] - $accountRatelimits[$window]['remaining'],
-                'limit' => $accountRatelimits[$window]['limit'],
-                'hit_429' => $accountRatelimits[$window]['remaining'] === 0,
-                'start_date' => now()->toIso8601String(),
-                'end_date' => $accountRatelimits[$window]['resetTime'],
-            ];
+        }
+
+        $warning = null;
+
+        try {
+            $sampler->sampleIfStale($credential, self::MIN_SAMPLE_INTERVAL);
+        } catch (RuntimeException $exception) {
+            // Een mislukte meting mag de bewaarde geschiedenis niet wegvagen.
+            $warning = $exception->getMessage();
+        }
+
+        $measurements = $sampler->history($credential, $validated['limit'] ?? self::DEFAULT_HISTORY);
+
+        if ($measurements === [] && $warning !== null) {
+            return response()->json(['message' => $warning], 502);
         }
 
         return response()->json([
-            'timestamp' => now()->toIso8601String(),
-            'limits' => $limits,
+            'data' => $measurements,
+            'meta' => [
+                'store_id' => $credential?->store_id,
+                'count' => count($measurements),
+                'warning' => $warning,
+            ],
         ]);
     }
 }

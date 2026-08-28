@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LiteSpeedController;
 use App\Services\LiteSpeedService;
+use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
 
