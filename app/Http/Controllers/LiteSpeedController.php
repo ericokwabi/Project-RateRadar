@@ -11,8 +11,12 @@ use Illuminate\View\View;
 
 class LiteSpeedController extends Controller
 {
-    /** Zoveel metingen gaan er maximaal mee terug naar het dashboard. */
-    private const DEFAULT_HISTORY = 500;
+    /**
+     * Zoveel metingen gaan er maximaal mee terug naar het dashboard: een week
+     * aan 5-minutenmetingen. Hetzelfde getal dat de frontend vasthoudt, zodat de
+     * heatmap van zeven dagen ook echt zeven dagen kán tonen.
+     */
+    private const DEFAULT_HISTORY = 2016;
 
     public function index(LiteSpeedService $api): View
     {

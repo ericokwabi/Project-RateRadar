@@ -29,3 +29,11 @@ Artisan::command('inspire', function () {
 Schedule::command('ratelimit:sample --delay=295')
     ->everyFiveMinutes()
     ->withoutOverlapping(10);
+
+/*
+ * Eens per nacht opruimen. Het dashboard kijkt nooit verder terug dan een week;
+ * alles ouder dan een maand houden we alleen nog voor de zekerheid.
+ */
+Schedule::command('ratelimit:prune')
+    ->dailyAt('03:30')
+    ->withoutOverlapping();
