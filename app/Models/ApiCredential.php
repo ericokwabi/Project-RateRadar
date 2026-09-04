@@ -13,6 +13,8 @@ use Illuminate\Support\Carbon;
  * @property string $store_id
  * @property string $api_key
  * @property string $api_secret
+ * @property int|null $notify_limit
+ * @property Carbon|null $notify_sent_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read string $api_secret_last4
@@ -24,6 +26,8 @@ class ApiCredential extends Model
         'store_id',
         'api_key',
         'api_secret',
+        'notify_limit',
+        'notify_sent_at',
     ];
 
     /**
@@ -39,6 +43,8 @@ class ApiCredential extends Model
     {
         return [
             'api_secret' => 'encrypted',
+            'notify_limit' => 'integer',
+            'notify_sent_at' => 'datetime',
         ];
     }
 

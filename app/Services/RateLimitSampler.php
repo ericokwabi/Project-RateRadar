@@ -6,6 +6,7 @@ use App\Models\AccountRatelimit;
 use App\Models\ApiCredential;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * Neemt metingen af bij Lightspeed en bewaart ze, zodat het dashboard een
@@ -23,6 +24,7 @@ class RateLimitSampler
     public function sample(?ApiCredential $credential = null): Carbon
     {
         $measuredAt = Carbon::now();
+        $measurementId = (string) Str::uuid();
 
         try {
             $result = $this->api->fetchRatelimit($credential);
@@ -45,11 +47,12 @@ class RateLimitSampler
             $hit429 = true;
         }
 
-        DB::transaction(function () use ($windows, $credential, $measuredAt, $hit429) {
+        DB::transaction(function () use ($windows, $credential, $measuredAt, $measurementId, $hit429) {
             foreach ($windows as $name => $window) {
                 AccountRatelimit::create([
                     'api_credential_id' => $credential?->id,
                     'measured_at' => $measuredAt,
+                    'measurement_id' => $measurementId,
                     'limit_type' => $name,
                     'limit' => $window['limit'],
                     'remaining' => $window['remaining'],

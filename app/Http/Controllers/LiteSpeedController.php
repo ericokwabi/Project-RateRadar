@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\ApiCredential;
-use App\Services\LiteSpeedService;
 use App\Services\RateLimitSampler;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,12 +20,20 @@ class LiteSpeedController extends Controller
     /** Zoveel metingen gaan er maximaal mee terug naar het dashboard. */
     private const DEFAULT_HISTORY = 500;
 
-    public function index(LiteSpeedService $api, RateLimitSampler $sampler): View
+    public function index(RateLimitSampler $sampler): View
     {
-        // Bezoek aan deze pagina legt meteen een meetpunt vast.
-        $sampler->sampleIfStale(null, self::MIN_SAMPLE_INTERVAL);
+        $latest = $sampler->history(null, 1)[0]['limits'] ?? [];
 
-        return view('items.index', ['items' => $api->getLiteSpeedEndpoint()]);
+        $items = ['accountRatelimit' => []];
+
+        foreach ($latest as $limit => $window) {
+            $items['accountRatelimit'][$limit] = [
+                'limit' => $window['limit'],
+                'remaining' => $window['limit'] - $window['used'],
+            ];
+        }
+
+        return view('items.index', ['items' => $items]);
     }
 
     public function accountRatelimit(Request $request, RateLimitSampler $sampler): JsonResponse

@@ -40,4 +40,8 @@ return [
         'api_secret' => env('API_SECRET'),
         'base_url' => env('API_BASE_URL'),
     ],
+
+    'rate_limit_alert' => [
+        'email' => env('RATE_LIMIT_ALERT_EMAIL'),
+    ],
 ];

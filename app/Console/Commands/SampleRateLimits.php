@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\ApiCredential;
+use App\Services\RateLimitAlertService;
 use App\Services\RateLimitSampler;
 use Illuminate\Console\Command;
 use RuntimeException;
@@ -20,7 +21,7 @@ class SampleRateLimits extends Command
 
     protected $description = 'Meet de Lightspeed rate limits en bewaar het resultaat';
 
-    public function handle(RateLimitSampler $sampler): int
+    public function handle(RateLimitSampler $sampler, RateLimitAlertService $alerts): int
     {
         // De scheduler start op de hele minuut. Met een wachttijd landt de
         // meting vlak voor de reset, waar het venster op zijn voller is --
@@ -33,13 +34,23 @@ class SampleRateLimits extends Command
         }
 
         $credentials = $this->targets();
+
+        if ($credentials === [] && $this->option('store')) {
+            return self::FAILURE;
+        }
+
         $failures = 0;
 
         foreach ($credentials as $credential) {
             $label = $credential->store_id ?? '.env-sleutel';
 
             try {
-                $sampler->sample($credential);
+                $measuredAt = $sampler->sample($credential);
+
+                if ($credential !== null && $alerts->check($credential, $measuredAt)) {
+                    $this->warn("Waarschuwing verstuurd: {$label}");
+                }
+
                 $this->info("Gemeten: {$label}");
             } catch (RuntimeException $exception) {
                 $this->error("Mislukt ({$label}): {$exception->getMessage()}");

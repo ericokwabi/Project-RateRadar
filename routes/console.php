@@ -9,12 +9,12 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 /*
- * Elke vijf minuten een meetpunt, op :00, :05, :10, ... Hetzelfde ritme als
- * limit5Min, het kortste venster dat Lightspeed hanteert: zo hoort er bij elk
- * venster precies een meting, ook wanneer er niemand naar het dashboard kijkt.
+ * Start in minuut 04, 09, 14, ... en wacht 55 seconden. Zo valt de meting op
+ * 04:55, 09:55, 14:55, ... zonder dat een slaap van bijna vijf minuten de
+ * volgende geplande taak blokkeert.
  *
  * Draaien met: php artisan schedule:work
  */
-Schedule::command('ratelimit:sample')
-    ->everyFiveMinutes()
+Schedule::command('ratelimit:sample --delay=55')
+    ->cron('4-59/5 * * * *')
     ->withoutOverlapping();

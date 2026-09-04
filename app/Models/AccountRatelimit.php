@@ -13,6 +13,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int|null $api_credential_id
  * @property Carbon|null $measured_at
+ * @property string|null $measurement_id
  * @property string $limit_type
  * @property int $limit
  * @property int $remaining
@@ -38,6 +39,7 @@ class AccountRatelimit extends Model
     protected $fillable = [
         'api_credential_id',
         'measured_at',
+        'measurement_id',
         'limit_type',
         'limit',
         'remaining',
