@@ -29,7 +29,7 @@ class RateLimitExceeded extends Mailable
     public function content(): Content
     {
         return new Content(
-            text: 'emails.rate-limit-exceeded',
+            html: 'emails.rate-limit-exceeded',
         );
     }
 }
