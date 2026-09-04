@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Route;
  */
 
 
-Route::get('account/ratelimit', [LiteSpeedController::class, 'accountRatelimit']);
+Route::get('account/ratelimit', [LiteSpeedController::class, 'accountRatelimit'])->middleware('log.api');
 
 Route::middleware('auth:sanctum')->group(function () {
     // Wie ben ik? Het dashboard gebruikt dit om te weten of er nog een geldige
